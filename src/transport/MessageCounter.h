@@ -54,7 +54,13 @@ public:
     virtual CHIP_ERROR AdvanceAndConsume(uint32_t & fetch) = 0; /** Advance the counter, and feed the new counter to fetch */
 
     // Note: this function must be called after Crypto is initialized. It can not be called from global variable constructor.
-    static uint32_t GetDefaultInitialValuePredecessor() { return Crypto::GetRandU32() & kMessageCounterRandomInitMask; }
+    static uint32_t GetDefaultInitialValuePredecessor() {
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+      return 1989 & kMessageCounterRandomInitMask;
+#else
+      return Crypto::GetRandU32() & kMessageCounterRandomInitMask;
+#endif
+    }
 };
 
 class GlobalUnencryptedMessageCounter : public MessageCounter

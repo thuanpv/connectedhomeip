@@ -889,11 +889,22 @@ void SessionManager::SecureUnicastMessageDispatch(const PacketHeader & partialPa
 #endif // INET_CONFIG_ENABLE_TCP_ENDPOINT
 
     Optional<SessionHandle> session = mSecureSessions.FindSecureSessionByLocalKey(partialPacketHeader.GetSessionId());
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    // If no valid existing session was found - try to use test session instead.
+    if (!session.HasValue())
+    {
+        #warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 using default session!"
+        ChipLogError(SecureChannel, "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 using default session... ");
+        uint16_t kLocalSessionId = 1;
+        session                  = mSecureSessions.FindSecureSessionByLocalKey(kLocalSessionId);
+    }
+#else
     if (!session.HasValue())
     {
         ChipLogError(Inet, "Data received on an unknown session (LSID=%d). Dropping it!", partialPacketHeader.GetSessionId());
         return;
     }
+#endif
 
     Transport::SecureSession * secureSession  = session.Value()->AsSecureSession();
     Transport::PeerAddress mutablePeerAddress = peerAddress;
@@ -981,7 +992,12 @@ void SessionManager::SecureUnicastMessageDispatch(const PacketHeader & partialPa
                       "Received a duplicate message with MessageCounter:" ChipLogFormatMessageCounter
                       " on exchange " ChipLogFormatExchangeId,
                       packetHeader.GetMessageCounter(), ChipLogValueExchangeIdFromReceivedHeader(payloadHeader));
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+#warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing duplicate message check!"
+        ChipLogError(SecureChannel, "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing duplicate message check... ");
+#else
         isDuplicate = SessionMessageDelegate::DuplicateMessage::Yes;
+#endif
         err         = CHIP_NO_ERROR;
     }
     if (err != CHIP_NO_ERROR)

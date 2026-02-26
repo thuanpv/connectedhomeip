@@ -44,6 +44,16 @@ CHIP_ERROR Encrypt(const CryptoContext & context, CryptoContext::ConstNonceView 
 
     ReturnErrorOnFailure(payloadHeader.EncodeBeforeData(msgBuf));
 
+    // Skip encryption and message integrity!
+    #if CHIP_CONFIG_SECURITY_FUZZ_MODE
+        #warning                                                                                                                           \
+        "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing encryption! Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
+        ChipLogError(SecureChannel,
+                 "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing encryption... "
+                 "Node can only communicate with other nodes built with this flag set.");
+        return CHIP_NO_ERROR;
+    #endif
+
     uint8_t * data  = msgBuf->Start();
     size_t totalLen = msgBuf->TotalLength();
 
@@ -62,6 +72,17 @@ CHIP_ERROR Decrypt(const CryptoContext & context, CryptoContext::ConstNonceView 
                    const PacketHeader & packetHeader, System::PacketBufferHandle & msg)
 {
     VerifyOrReturnError(!msg.IsNull(), CHIP_ERROR_INVALID_ARGUMENT);
+
+    #if CHIP_CONFIG_SECURITY_FUZZ_MODE
+        #warning                                                                                                                           \
+        "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing decryption! Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
+        ChipLogError(SecureChannel,
+                 "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing decryption... "
+                 "Node can only communicate with other nodes built with this flag set.");
+
+        ReturnErrorOnFailure(payloadHeader.DecodeAndConsume(msg));
+        return CHIP_NO_ERROR;
+    #endif
 
     uint8_t * data = msg->Start();
     size_t len     = msg->DataLength();

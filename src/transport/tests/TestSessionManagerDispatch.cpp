@@ -230,7 +230,7 @@ struct MessageTestEntry theMessageTestVector[] = {
 
         .expectedMessageCount = 0,
     },
-#if !CHIP_CONFIG_SECURITY_TEST_MODE
+#if !CHIP_CONFIG_SECURITY_TEST_MODE && !CHIP_CONFIG_SECURITY_FUZZ_MODE
     // =======================================
     // GROUP positive test cases
     // =======================================
@@ -403,7 +403,7 @@ struct MessageTestEntry theMessageTestVector[] = {
     },
 #endif // CHIP_CONFIG_PRIVACY_ACCEPT_NONSPEC_SVE2
 
-#endif // !CHIP_CONFIG_SECURITY_TEST_MODE
+#endif // !CHIP_CONFIG_SECURITY_TEST_MODE && !CHIP_CONFIG_SECURITY_FUZZ_MODE
 };
 
 const uint16_t theMessageTestVectorLength = sizeof(theMessageTestVector) / sizeof(theMessageTestVector[0]);

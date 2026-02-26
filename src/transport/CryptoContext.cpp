@@ -77,7 +77,7 @@ CHIP_ERROR CryptoContext::InitFromSecret(SessionKeystore & keystore, const ByteS
     auto & i2rKey = (role == SessionRole::kInitiator) ? mEncryptionKey : mDecryptionKey;
     auto & r2iKey = (role == SessionRole::kInitiator) ? mDecryptionKey : mEncryptionKey;
 
-#if CHIP_CONFIG_SECURITY_TEST_MODE
+#if CHIP_CONFIG_SECURITY_TEST_MODE || CHIP_CONFIG_SECURITY_FUZZ_MODE
     ReturnErrorOnFailure(InitTestMode(keystore, i2rKey, r2iKey));
 #else
     ReturnErrorOnFailure(keystore.DeriveSessionKeys(secret, salt, info, i2rKey, r2iKey, mAttestationChallenge));
@@ -102,7 +102,7 @@ CHIP_ERROR CryptoContext::InitFromSecret(Crypto::SessionKeystore & keystore, con
     auto & i2rKey = (role == SessionRole::kInitiator) ? mEncryptionKey : mDecryptionKey;
     auto & r2iKey = (role == SessionRole::kInitiator) ? mDecryptionKey : mEncryptionKey;
 
-#if CHIP_CONFIG_SECURITY_TEST_MODE
+#if CHIP_CONFIG_SECURITY_TEST_MODE || CHIP_CONFIG_SECURITY_FUZZ_MODE
     ReturnErrorOnFailure(InitTestMode(keystore, i2rKey, r2iKey));
 #else
     ReturnErrorOnFailure(keystore.DeriveSessionKeys(hkdfKey, salt, info, i2rKey, r2iKey, mAttestationChallenge));
@@ -156,7 +156,7 @@ CHIP_ERROR CryptoContext::BuildNonce(NonceView nonce, uint8_t securityFlags, uin
 
     bbuf.Put8(securityFlags);
     bbuf.Put32(messageCounter);
-#if CHIP_CONFIG_SECURITY_TEST_MODE
+#if CHIP_CONFIG_SECURITY_TEST_MODE || CHIP_CONFIG_SECURITY_FUZZ_MODE
     bbuf.Put64(0); // Simplifies decryption of CASE sessions when in TEST_MODE.
 #else
     bbuf.Put64(nodeId);
