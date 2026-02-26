@@ -237,8 +237,11 @@ CHIP_ERROR PersistentStorageOperationalKeystore::ActivateOpKeypairForFabric(Fabr
     VerifyOrReturnError(mPendingKeypair != nullptr, CHIP_ERROR_INVALID_FABRIC_INDEX);
     VerifyOrReturnError(IsValidFabricIndex(fabricIndex) && (fabricIndex == mPendingFabricIndex), CHIP_ERROR_INVALID_FABRIC_INDEX);
 
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+#else
     // Validate public key being activated matches last generated pending keypair
     VerifyOrReturnError(mPendingKeypair->Pubkey().Matches(nocPublicKey), CHIP_ERROR_INVALID_PUBLIC_KEY);
+#endif
 
     mIsPendingKeypairActive = true;
 

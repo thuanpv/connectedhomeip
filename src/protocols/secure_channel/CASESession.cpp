@@ -740,25 +740,63 @@ CHIP_ERROR CASESession::SendSigma1()
     encodeSigma1Inputs.initiatorEphPubKey = &mEphemeralKey->Pubkey();
 
     // Fill in the random value
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    const uint8_t kInitiatorRandomFixed[kSigmaParamRandomNumberSize] = {
+      0x20, 0x56, 0x2f, 0x96, 0x86, 0x20, 0x34, 0xda,
+      0xc0, 0x7d, 0xa6, 0x8b, 0xa9, 0x67, 0x75, 0xf1,
+      0xb8, 0x88, 0xc4, 0x8e, 0x51, 0x58, 0xc5, 0xd1,
+      0xec, 0xd1, 0x7c, 0xc5, 0x77, 0x1a, 0x05, 0xf2 // Example values
+    };
+    memcpy(mInitiatorRandom, kInitiatorRandomFixed, kSigmaParamRandomNumberSize);
+#else
     ReturnErrorOnFailure(DRBG_get_bytes(mInitiatorRandom, sizeof(mInitiatorRandom)));
+#endif
     encodeSigma1Inputs.initiatorRandom = ByteSpan(mInitiatorRandom);
 
     // Generate a Destination Identifier based on the node we are attempting to reach
     {
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+        // set mIPK
+        const uint8_t kIPKFixed[16] = {
+          0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+          0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+        };
+        memcpy(mIPK, kIPKFixed, kIPKSize);
+#else
         // Obtain originator IPK matching the fabric where we are trying to open a session. mIPK
         // will be properly set thereafter.
         ReturnErrorOnFailure(RecoverInitiatorIpk());
+#endif
 
         FabricId fabricId = fabricInfo->GetFabricId();
         Crypto::P256PublicKey rootPubKey;
         ReturnErrorOnFailure(mFabricsTable->FetchRootPubkey(mFabricIndex, rootPubKey));
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+        // set rootPubKey, 65 bytes
+        const uint8_t kRootPubKeyFixed[] = {
+          0xff,
+          0x20, 0x56, 0x2f, 0x96, 0x86, 0x20, 0x34, 0xda,
+          0xc0, 0x7d, 0xa6, 0x8b, 0xa9, 0x67, 0x75, 0xf1,
+          0xb8, 0x88, 0xc4, 0x8e, 0x51, 0x58, 0xc5, 0xd1,
+          0xec, 0xd1, 0x7c, 0xc5, 0x77, 0x1a, 0x05, 0xf2, // Example values
+          0x20, 0x56, 0x2f, 0x96, 0x86, 0x20, 0x34, 0xda,
+          0xc0, 0x7d, 0xa6, 0x8b, 0xa9, 0x67, 0x75, 0xf1,
+          0xb8, 0x88, 0xc4, 0x8e, 0x51, 0x58, 0xc5, 0xd1,
+          0xec, 0xd1, 0x7c, 0xc5, 0x77, 0x1a, 0x05, 0xf2 // Example values
+        };
+        Credentials::P256PublicKeySpan rootPubKeySpan{ kRootPubKeyFixed };
+#else
         Credentials::P256PublicKeySpan rootPubKeySpan{ rootPubKey.ConstBytes() };
+#endif
 
         MutableByteSpan destinationIdSpan(destinationIdentifier);
         ReturnErrorOnFailure(GenerateCaseDestinationId(ByteSpan(mIPK), encodeSigma1Inputs.initiatorRandom, rootPubKeySpan, fabricId,
                                                        mPeerNodeId, destinationIdSpan));
         CHIP_FAULT_INJECT(FaultInjection::kFault_CASECorruptDestinationID, destinationIdentifier[0] ^= 0xFF);
         encodeSigma1Inputs.destinationId = destinationIdSpan;
+        //fuzzing
+        ChipLogDetail(SecureChannel, "Fuzzing show mIPK");
+        ChipLogByteSpan(SecureChannel, ByteSpan(mIPK));
     }
 
     VerifyOrReturnError(mLocalMRPConfig.HasValue(), CHIP_ERROR_INCORRECT_STATE);
@@ -948,7 +986,23 @@ CHIP_ERROR CASESession::FindLocalNodeFromDestinationId(const ByteSpan & destinat
         NodeId nodeId     = fabricInfo.GetNodeId();
         Crypto::P256PublicKey rootPubKey;
         ReturnErrorOnFailure(mFabricsTable->FetchRootPubkey(fabricInfo.GetFabricIndex(), rootPubKey));
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+        // set rootPubKey, 65 bytes
+        const uint8_t kRootPubKeyFixed[] = {
+          0xff,
+          0x20, 0x56, 0x2f, 0x96, 0x86, 0x20, 0x34, 0xda,
+          0xc0, 0x7d, 0xa6, 0x8b, 0xa9, 0x67, 0x75, 0xf1,
+          0xb8, 0x88, 0xc4, 0x8e, 0x51, 0x58, 0xc5, 0xd1,
+          0xec, 0xd1, 0x7c, 0xc5, 0x77, 0x1a, 0x05, 0xf2, // Example values
+          0x20, 0x56, 0x2f, 0x96, 0x86, 0x20, 0x34, 0xda,
+          0xc0, 0x7d, 0xa6, 0x8b, 0xa9, 0x67, 0x75, 0xf1,
+          0xb8, 0x88, 0xc4, 0x8e, 0x51, 0x58, 0xc5, 0xd1,
+          0xec, 0xd1, 0x7c, 0xc5, 0x77, 0x1a, 0x05, 0xf2 // Example values
+        };
+        Credentials::P256PublicKeySpan rootPubKeySpan{ kRootPubKeyFixed };
+#else
         Credentials::P256PublicKeySpan rootPubKeySpan{ rootPubKey.ConstBytes() };
+#endif
 
         // Get IPK operational group key set for current candidate fabric
         GroupDataProvider::KeySet ipkKeySet;
@@ -964,7 +1018,16 @@ CHIP_ERROR CASESession::FindLocalNodeFromDestinationId(const ByteSpan & destinat
         {
             uint8_t candidateDestinationId[kSHA256_Hash_Length];
             MutableByteSpan candidateDestinationIdSpan(candidateDestinationId);
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+            // set mIPK
+            const uint8_t kIPKFixed[16] = {
+              0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef,
+              0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+            };
+            ByteSpan candidateIpkSpan(kIPKFixed);
+#else
             ByteSpan candidateIpkSpan(ipkKeySet.epoch_keys[keyIdx].key);
+#endif
 
             err = GenerateCaseDestinationId(candidateIpkSpan, initiatorRandom, rootPubKeySpan, fabricId, nodeId,
                                             candidateDestinationIdSpan);

@@ -494,7 +494,11 @@ CHIP_ERROR Spake2p::KeyConfirm(const uint8_t * in, size_t in_len)
 
     ReturnErrorOnFailure(PointWrite(XY, point_buffer, point_size));
 
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    CHIP_ERROR err = CHIP_NO_ERROR;
+#else
     CHIP_ERROR err = MacVerify(Kcaorb, hash_size / 2, in, in_len, point_buffer, point_size);
+#endif
     if (err == CHIP_ERROR_INTERNAL)
     {
         ChipLogError(SecureChannel, "Failed to verify peer's MAC. This can happen when setup code is incorrect.");
