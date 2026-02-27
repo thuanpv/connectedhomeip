@@ -70,7 +70,7 @@ CHIP_ERROR CryptoContext::InitFromSecret(SessionKeystore & keystore, const ByteS
 {
     VerifyOrReturnError(mKeyAvailable == false, CHIP_ERROR_INCORRECT_STATE);
 
-    ByteSpan info = (infoType == SessionInfoType::kSessionResumption) ? ByteSpan(RSEKeysInfo) : ByteSpan(SEKeysInfo);
+    //ByteSpan info = (infoType == SessionInfoType::kSessionResumption) ? ByteSpan(RSEKeysInfo) : ByteSpan(SEKeysInfo);
 
     // If the secure session is created by session initiator, use the I2R key to encrypt
     // messages being transmitted. Otherwise, use the R2I key.
@@ -95,7 +95,7 @@ CHIP_ERROR CryptoContext::InitFromSecret(Crypto::SessionKeystore & keystore, con
 {
     VerifyOrReturnError(mKeyAvailable == false, CHIP_ERROR_INCORRECT_STATE);
 
-    ByteSpan info = (infoType == SessionInfoType::kSessionResumption) ? ByteSpan(RSEKeysInfo) : ByteSpan(SEKeysInfo);
+    //ByteSpan info = (infoType == SessionInfoType::kSessionResumption) ? ByteSpan(RSEKeysInfo) : ByteSpan(SEKeysInfo);
 
     // If the secure session is created by session initiator, use the I2R key to encrypt
     // messages being transmitted. Otherwise, use the R2I key.
@@ -128,7 +128,7 @@ CHIP_ERROR CryptoContext::InitFromKeyPair(SessionKeystore & keystore, const Cryp
     return InitFromSecret(keystore, secret.Span(), salt, infoType, role);
 }
 
-#if CHIP_CONFIG_SECURITY_TEST_MODE
+#if CHIP_CONFIG_SECURITY_TEST_MODE || CHIP_CONFIG_SECURITY_FUZZ_MODE
 CHIP_ERROR CryptoContext::InitTestMode(Crypto::SessionKeystore & keystore, Crypto::Aes128KeyHandle & i2rKey,
                                        Crypto::Aes128KeyHandle & r2iKey)
 {
@@ -137,8 +137,7 @@ CHIP_ERROR CryptoContext::InitTestMode(Crypto::SessionKeystore & keystore, Crypt
 
     constexpr uint8_t kTestSharedSecret[CHIP_CONFIG_TEST_SHARED_SECRET_LENGTH] = CHIP_CONFIG_TEST_SHARED_SECRET_VALUE;
 
-#warning                                                                                                                           \
-    "Warning: CHIP_CONFIG_SECURITY_TEST_MODE=1 bypassing key negotiation... All sessions will use known, fixed test key, and NodeID=0 in NONCE. Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
+//#warning "Warning: CHIP_CONFIG_SECURITY_TEST_MODE=1 bypassing key negotiation... All sessions will use known, fixed test key, and NodeID=0 in NONCE. Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
     ChipLogError(
         SecureChannel,
         "Warning: CHIP_CONFIG_SECURITY_TEST_MODE=1 bypassing key negotiation... All sessions will use known, fixed test key, "
@@ -148,7 +147,7 @@ CHIP_ERROR CryptoContext::InitTestMode(Crypto::SessionKeystore & keystore, Crypt
     return keystore.DeriveSessionKeys(ByteSpan(kTestSharedSecret), ByteSpan{} /* salt */, ByteSpan(SEKeysInfo), i2rKey, r2iKey,
                                       mAttestationChallenge);
 }
-#endif // CHIP_CONFIG_SECURITY_TEST_MODE
+#endif // CHIP_CONFIG_SECURITY_TEST_MODE || CHIP_CONFIG_SECURITY_FUZZ_MODE
 
 CHIP_ERROR CryptoContext::BuildNonce(NonceView nonce, uint8_t securityFlags, uint32_t messageCounter, NodeId nodeId)
 {

@@ -46,8 +46,7 @@ CHIP_ERROR Encrypt(const CryptoContext & context, CryptoContext::ConstNonceView 
 
     // Skip encryption and message integrity!
     #if CHIP_CONFIG_SECURITY_FUZZ_MODE
-        #warning                                                                                                                           \
-        "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing encryption! Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
+        //#warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing encryption! Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
         ChipLogError(SecureChannel,
                  "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing encryption... "
                  "Node can only communicate with other nodes built with this flag set.");
@@ -74,8 +73,7 @@ CHIP_ERROR Decrypt(const CryptoContext & context, CryptoContext::ConstNonceView 
     VerifyOrReturnError(!msg.IsNull(), CHIP_ERROR_INVALID_ARGUMENT);
 
     #if CHIP_CONFIG_SECURITY_FUZZ_MODE
-        #warning                                                                                                                           \
-        "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing decryption! Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
+        //#warning   "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing decryption! Node can only communicate with other nodes built with this flag set. Requires build flag 'treat_warnings_as_errors=false'."
         ChipLogError(SecureChannel,
                  "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing decryption... "
                  "Node can only communicate with other nodes built with this flag set.");

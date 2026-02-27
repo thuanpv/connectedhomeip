@@ -43,7 +43,7 @@ public:
 
     void Init() {
     #if CHIP_CONFIG_SECURITY_FUZZ_MODE
-    #warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing random sessionId!"
+    //#warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing random sessionId!"
         ChipLogError(SecureChannel, "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing random sessionId... ");
         static uint16_t manualSessionId = 1;
         mNextSessionId                  = ++manualSessionId;

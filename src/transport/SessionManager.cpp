@@ -893,7 +893,7 @@ void SessionManager::SecureUnicastMessageDispatch(const PacketHeader & partialPa
     // If no valid existing session was found - try to use test session instead.
     if (!session.HasValue())
     {
-        #warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 using default session!"
+        //#warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 using default session!"
         ChipLogError(SecureChannel, "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 using default session... ");
         uint16_t kLocalSessionId = 1;
         session                  = mSecureSessions.FindSecureSessionByLocalKey(kLocalSessionId);
@@ -993,7 +993,7 @@ void SessionManager::SecureUnicastMessageDispatch(const PacketHeader & partialPa
                       " on exchange " ChipLogFormatExchangeId,
                       packetHeader.GetMessageCounter(), ChipLogValueExchangeIdFromReceivedHeader(payloadHeader));
 #if CHIP_CONFIG_SECURITY_FUZZ_MODE
-#warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing duplicate message check!"
+//#warning "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing duplicate message check!"
         ChipLogError(SecureChannel, "Warning: CHIP_CONFIG_SECURITY_FUZZ_MODE=1 bypassing duplicate message check... ");
 #else
         isDuplicate = SessionMessageDelegate::DuplicateMessage::Yes;
