@@ -1240,8 +1240,18 @@ CHIP_ERROR CASESession::PrepareSigma2(EncodeSigma2Inputs & outSigma2Data)
     MutableByteSpan nocCert{ nocBuf.Get(), kMaxCHIPCertLength };
     ReturnErrorOnFailure(mFabricsTable->FetchNOCCert(mFabricIndex, nocCert));
 
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    const uint8_t kResponderRandomFixed[32] = {
+      0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe,
+      0xfa, 0xce, 0x0f, 0xf1, 0xce, 0x0b, 0x00, 0x0b,
+      0x1e, 0xac, 0x0d, 0xec, 0x0d, 0xe0, 0xf0, 0x0d,
+      0xba, 0xd0, 0xd0, 0x0d, 0xd0, 0x0d, 0xd0, 0x0e
+    };
+    memcpy(outSigma2Data.responderRandom, kResponderRandomFixed, kSigmaParamRandomNumberSize);
+#else
     // Fill in the random value
     ReturnErrorOnFailure(DRBG_get_bytes(&outSigma2Data.responderRandom[0], sizeof(outSigma2Data.responderRandom)));
+#endif
 
     // Generate an ephemeral keypair
     mEphemeralKey = mFabricsTable->AllocateEphemeralKeypairForCASE();
@@ -1249,8 +1259,19 @@ CHIP_ERROR CASESession::PrepareSigma2(EncodeSigma2Inputs & outSigma2Data)
     ReturnErrorOnFailure(mEphemeralKey->Initialize(ECPKeyTarget::ECDH));
     outSigma2Data.responderEphPubKey = &mEphemeralKey->Pubkey();
 
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    const uint8_t kSharedSecretFixed[32] = {
+      0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+      0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00,
+      0x0a, 0x1b, 0x2c, 0x3d, 0x4e, 0x5f, 0x6e, 0x7d,
+      0x8c, 0x9b, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0
+    };
+    memcpy( mSharedSecret.Bytes(), kSharedSecretFixed, kMax_ECDH_Secret_Length); // 32 bytes
+    mSharedSecret.SetLength(kMax_ECDH_Secret_Length);
+#else
     // Generate a Shared Secret
     ReturnErrorOnFailure(mEphemeralKey->ECDH_derive_secret(mRemotePubKey, mSharedSecret));
+#endif
 
     uint8_t msgSalt[kIPKSize + kSigmaParamRandomNumberSize + kP256_PublicKey_Length + kSHA256_Hash_Length];
 
@@ -1547,8 +1568,19 @@ CHIP_ERROR CASESession::HandleSigma2(System::PacketBufferHandle && msg)
     //  mRemotePubKey.Length() == responderEphPubKey.size() == kP256_PublicKey_Length.
     memcpy(mRemotePubKey.Bytes(), parsedSigma2.responderEphPubKey.data(), mRemotePubKey.Length());
 
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    const uint8_t kSharedSecretFixed[32] = {
+      0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+      0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00,
+      0x0a, 0x1b, 0x2c, 0x3d, 0x4e, 0x5f, 0x6e, 0x7d,
+      0x8c, 0x9b, 0xab, 0xbc, 0xcd, 0xde, 0xef, 0xf0
+    };
+    memcpy(mSharedSecret.Bytes(), kSharedSecretFixed, kMax_ECDH_Secret_Length); // 32 bytes
+    mSharedSecret.SetLength(kMax_ECDH_Secret_Length);
+#else
     // Generate a Shared Secret
     ReturnErrorOnFailure(mEphemeralKey->ECDH_derive_secret(mRemotePubKey, mSharedSecret));
+#endif
 
     // Generate the S2K key
     AutoReleaseSessionKey sr2k(*mSessionManager->GetSessionKeystore());
@@ -2160,6 +2192,9 @@ CHIP_ERROR CASESession::HandleSigma3b(HandleSigma3Data & data, bool & cancel)
     VerifyOrReturnError(data.fabricId == initiatorFabricId, CHIP_ERROR_INVALID_CASE_PARAMETER);
 
     // Step 7 - Validate Signature
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    return CHIP_NO_ERROR;
+#endif
     ReturnErrorOnFailure(initiatorPublicKey.ECDSA_validate_msg_signature(data.msgR3SignedSpan.data(), data.msgR3SignedSpan.size(),
                                                                          data.tbsData3Signature));
 
@@ -2251,6 +2286,9 @@ CHIP_ERROR CASESession::ConstructSaltSigma3(const ByteSpan & ipk, MutableByteSpa
     bbuf.Put(ipk.data(), ipk.size());
     MutableByteSpan messageDigestSpan(md);
     ReturnErrorOnFailure(mCommissioningHash.GetDigest(messageDigestSpan));
+#if CHIP_CONFIG_SECURITY_FUZZ_MODE
+    memset(messageDigestSpan.data(), 0, messageDigestSpan.size());
+#endif
     bbuf.Put(messageDigestSpan.data(), messageDigestSpan.size());
 
     size_t saltWritten = 0;
